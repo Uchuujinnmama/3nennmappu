@@ -51,62 +51,66 @@ const ALL_SYMBOLS = [...SYMBOLS.level1, ...SYMBOLS.level2, ...SYMBOLS.level3];
 
 // サウンド合成用ユーティリティ
 const playSound = (type) => {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) return;
-  const ctx = new AudioContext();
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
 
-  const playTone = (freq, type, duration, volume = 0.1) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    gain.gain.setValueAtTime(volume, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-  };
+    const playTone = (freq, type, duration, volume = 0.1) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    };
 
-  switch (type) {
-    case 'correct':
-      playTone(660, 'sine', 0.1);
-      setTimeout(() => playTone(880, 'sine', 0.2), 100);
-      break;
-    case 'wrong':
-      playTone(220, 'sawtooth', 0.3, 0.05);
-      playTone(233, 'sawtooth', 0.3, 0.05);
-      break;
-    case 'siren':
-      const sOsc = ctx.createOscillator();
-      const sGain = ctx.createGain();
-      sOsc.type = 'triangle';
-      sOsc.frequency.setValueAtTime(440, ctx.currentTime);
-      sOsc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
-      sOsc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 1.0);
-      sGain.gain.setValueAtTime(0.05, ctx.currentTime);
-      sGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
-      sOsc.connect(sGain);
-      sGain.connect(ctx.destination);
-      sOsc.start();
-      sOsc.stop(ctx.currentTime + 1.0);
-      break;
-    case 'explosion':
-      const bufferSize = ctx.sampleRate * 2;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.2, ctx.currentTime);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
-      noise.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noise.start();
-      break;
-    default:
-      break;
+    switch (type) {
+      case 'correct':
+        playTone(660, 'sine', 0.1);
+        setTimeout(() => playTone(880, 'sine', 0.2), 100);
+        break;
+      case 'wrong':
+        playTone(220, 'sawtooth', 0.3, 0.05);
+        playTone(233, 'sawtooth', 0.3, 0.05);
+        break;
+      case 'siren':
+        const sOsc = ctx.createOscillator();
+        const sGain = ctx.createGain();
+        sOsc.type = 'triangle';
+        sOsc.frequency.setValueAtTime(440, ctx.currentTime);
+        sOsc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
+        sOsc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 1.0);
+        sGain.gain.setValueAtTime(0.05, ctx.currentTime);
+        sGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.0);
+        sOsc.connect(sGain);
+        sGain.connect(ctx.destination);
+        sOsc.start();
+        sOsc.stop(ctx.currentTime + 1.0);
+        break;
+      case 'explosion':
+        const bufferSize = ctx.sampleRate * 2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.2, ctx.currentTime);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
+        noise.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start();
+        break;
+      default:
+        break;
+    }
+  } catch (e) {
+    console.error("Audio error", e);
   }
 };
 
@@ -132,7 +136,7 @@ const MapIcon = ({ type, size = "32" }) => {
     case 'power_plant': return <svg width={size} height={size} viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill={fill} stroke={stroke} strokeWidth="6"/><path d="M30 30 L70 70 M70 30 L30 70" stroke={stroke} strokeWidth="8"/></svg>;
     case 'health_center': return <svg width={size} height={size} viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="50" fill={fill} stroke={stroke} strokeWidth="6"/><path d="M50 15 V30" stroke={stroke} strokeWidth="8"/></svg>;
     case 'prosecutor': return <svg width={size} height={size} viewBox="0 0 100 100"><path d="M50 15 L80 50 L50 85 L20 50 Z" fill={fill} stroke={stroke} strokeWidth="6"/><circle cx="50" cy="50" r="8" fill="currentColor"/></svg>;
-    case 'high_school': return <div className="relative"><span className="text-xl font-bold">文</span><div className="absolute inset-0 border-2 border-current rounded-full -m-1"></div></div>;
+    case 'high_school': return <div className="relative flex items-center justify-center"><span className="text-xl font-bold">文</span><div className="absolute inset-0 border-2 border-current rounded-full -m-1"></div></div>;
     case 'bank': return <svg width={size} height={size} viewBox="0 0 100 100"><path d="M50 20 C25 20 25 80 50 80 C75 80 75 20 50 20" fill={fill} stroke={stroke} strokeWidth="10"/></svg>;
     case 'museum': return <svg width={size} height={size} viewBox="0 0 100 100"><path d="M15 80 H85 M25 80 V45 M50 80 V45 M75 80 V45 M15 45 H85 L50 15 Z" fill={fill} stroke={stroke} strokeWidth="6"/></svg>;
     case 'court': return <svg width={size} height={size} viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill={fill} stroke={stroke} strokeWidth="10"/><line x1="30" y1="80" x2="70" y2="80" stroke={stroke} strokeWidth="15"/></svg>;
@@ -188,7 +192,7 @@ export default function App() {
   const generateMission = (currentBlocks, lvl) => {
     const visibleBlocks = currentBlocks.filter(b => b.visible);
     if (visibleBlocks.length === 0) {
-      clearInterval(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       setScreen('result');
       return;
     }
@@ -215,7 +219,7 @@ export default function App() {
         setTimeLeft(prev => {
           if (prev === 6) playSound('siren');
           if (prev <= 1) {
-            clearInterval(timerRef.current);
+            if (timerRef.current) clearInterval(timerRef.current);
             handleExplosion();
             return 0;
           }
@@ -223,7 +227,9 @@ export default function App() {
         });
       }, 1000);
     }
-    return () => clearInterval(timerRef.current);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [screen, level, isExploding]);
 
   const handleExplosion = () => {
@@ -291,7 +297,7 @@ export default function App() {
   );
 
   return (
-    <div className={`min-h-screen relative font-sans text-slate-800 p-4 md:p-8 transition-all duration-300 ${isExploding ? 'shake-animation' : ''}`}>
+    <div className={`min-h-screen relative font-sans text-slate-800 p-4 md:p-8 transition-all duration-300 overflow-x-hidden ${isExploding ? 'shake-animation' : ''}`}>
       <MinecraftBg />
       
       <div className="max-w-5xl mx-auto relative z-10">
@@ -300,53 +306,53 @@ export default function App() {
            <div className="relative z-10 animate-in fade-in duration-700 max-w-4xl mx-auto">
            <div className="relative h-64 md:h-80 w-full rounded-3xl overflow-hidden mb-10 shadow-2xl border-4 border-white">
              <div className="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center text-white p-6 text-center">
-               <Compass className="w-20 h-20 mb-4 text-yellow-400 animate-pulse" />
-               <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tighter drop-shadow-lg">精鋭地図博士への道</h1>
-               <p className="text-slate-300 font-bold max-w-lg">
+               <Compass className="w-16 h-16 md:w-20 md:h-20 mb-4 text-yellow-400 animate-pulse" />
+               <h1 className="text-3xl md:text-5xl font-black mb-2 tracking-tighter drop-shadow-lg">精鋭地図博士への道</h1>
+               <p className="text-slate-300 font-bold max-w-lg text-sm md:text-base">
                  測量士からパイロットまで、プロが見る景色をマスターせよ。<br />
                  地形を読み解く力は、君を最強の冒険者にする。
                </p>
              </div>
            </div>
      
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-             <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-lg border-2 border-indigo-100">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12">
+             <div className="bg-white/95 backdrop-blur-sm p-6 md:p-8 rounded-3xl shadow-lg border-2 border-indigo-100">
                <div className="flex items-center gap-3 mb-4 text-indigo-700">
                  <Search className="w-8 h-8" />
-                 <h2 className="text-2xl font-black">プロが記号を見る理由</h2>
+                 <h2 className="text-xl md:text-2xl font-black">プロが記号を見る理由</h2>
                </div>
-               <p className="text-slate-600 leading-relaxed font-medium">
+               <p className="text-slate-600 leading-relaxed font-medium text-sm md:text-base">
                   インターネットの地図は便利ですが、情報はあふれています。記号を知っていると、地図を見た瞬間に<span className="text-indigo-600 font-bold">「ここは昔からある村だ」「ここは水害に強い場所だ」</span>という、データ以上の情報が頭の中に飛び込んできます。パイロットは高い煙突や電波塔を「回避すべき障害物」として見ます。救助隊は「荒地」や「竹林」の記号から、車両が通れるかを判断します。
                </p>
              </div>
      
-             <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-lg border-2 border-orange-100">
+             <div className="bg-white/95 backdrop-blur-sm p-6 md:p-8 rounded-3xl shadow-lg border-2 border-orange-100">
                <div className="flex items-center gap-3 mb-4 text-orange-700">
                  <Volume2 className="w-8 h-8" />
-                 <h2 className="text-2xl font-black">将来どんな役に立つ？</h2>
+                 <h2 className="text-xl md:text-2xl font-black">将来どんな役に立つ？</h2>
                </div>
                  <ul className="space-y-4">
             <li className="flex gap-3">
-              <HardHat className="w-10 h-10 text-orange-500 shrink-0" />
-              <p className="text-sm text-slate-600"><span className="font-bold text-slate-800">測量士・建築士・都市計画家</span><br />街をゼロから作るプロは、記号の並びから土地の歴史や特性を読み解きます。</p>
+              <HardHat className="w-8 h-8 md:w-10 md:h-10 text-orange-500 shrink-0" />
+              <p className="text-xs md:text-sm text-slate-600"><span className="font-bold text-slate-800">測量士・建築士・都市計画家</span><br />街をゼロから作るプロは、記号の並びから土地の歴史や特性を読み解きます。</p>
             </li>
             <li className="flex gap-3">
-              <ShieldCheck className="w-10 h-10 text-blue-500 shrink-0" />
-              <p className="text-sm text-slate-600"><span className="font-bold text-slate-800">自衛隊・消防・災害救助隊</span><br />電波が届かない場所での救助活動。紙の地図と記号だけが命を救う道標になります。</p>
+              <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-blue-500 shrink-0" />
+              <p className="text-xs md:text-sm text-slate-600"><span className="font-bold text-slate-800">自衛隊・消防・災害救助隊</span><br />電波が届かない場所での救助活動。紙の地図と記号だけが命を救う道標になります。</p>
             </li>
             <li className="flex gap-3">
-              <Plane className="w-10 h-10 text-slate-500 shrink-0" />
-              <p className="text-sm text-slate-600"><span className="font-bold text-slate-800">冒険家・パイロット・航海士</span><br />世界中を旅する時、共通の言語である記号は君の最強の味方になります。</p>
+              <Plane className="w-8 h-8 md:w-10 md:h-10 text-slate-500 shrink-0" />
+              <p className="text-xs md:text-sm text-slate-600"><span className="font-bold text-slate-800">冒険家・パイロット・航海士</span><br />世界中を旅する時、共通の言語である記号は君の最強の味方になります。</p>
             </li>
           </ul>
         </div>
       </div>
 
-           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-             <button onClick={() => setScreen('dictionary')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xl font-black py-5 px-10 rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all flex items-center gap-3 border-b-8 border-emerald-900">
+           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6">
+             <button onClick={() => setScreen('dictionary')} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-lg md:text-xl font-black py-4 md:py-5 px-8 md:px-10 rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3 border-b-8 border-emerald-900">
                <List size={28} /> 全記号図鑑
              </button>
-             <button onClick={() => setScreen('home')} className="bg-slate-800 hover:bg-slate-900 text-white text-xl font-black py-5 px-10 rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all flex items-center gap-3 border-b-8 border-slate-950">
+             <button onClick={() => setScreen('home')} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white text-lg md:text-xl font-black py-4 md:py-5 px-8 md:px-10 rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3 border-b-8 border-slate-950">
                🚀 修行開始
              </button>
            </div>
@@ -357,10 +363,10 @@ export default function App() {
            <div className="relative z-10 animate-in fade-in duration-500 max-w-5xl mx-auto">
            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-slate-400">
              <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-               <button onClick={() => setScreen('landing')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold px-4 py-2 bg-slate-100 rounded-xl transition-colors">
+               <button onClick={() => setScreen('landing')} className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold px-4 py-2 bg-slate-100 rounded-xl transition-colors self-start">
                  <ArrowLeft size={20} /> もどる
                </button>
-               <h2 className="text-3xl font-black text-slate-800">地図記号図鑑</h2>
+               <h2 className="text-2xl md:text-3xl font-black text-slate-800">地図記号図鑑</h2>
                <div className="w-20 hidden sm:block"></div>
              </div>
      
@@ -368,17 +374,17 @@ export default function App() {
                {Object.entries(SYMBOLS).map(([lvl, symbols], index) => (
                  <div key={lvl}>
                    <div className="flex items-center gap-3 mb-6 border-b-4 border-slate-200 pb-2">
-                     <h3 className="text-2xl font-black text-slate-700">LEVEL {index + 1}</h3>
+                     <h3 className="text-xl md:text-2xl font-black text-slate-700">LEVEL {index + 1}</h3>
                    </div>
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                      {symbols.map((s) => (
                        <div key={s.id} className="flex gap-4 p-4 bg-white rounded-2xl border-2 border-slate-100 shadow-sm">
-                         <div className="w-14 h-14 shrink-0 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200">
-                           <MapIcon type={s.id} size="28" />
+                         <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200">
+                           <MapIcon type={s.id} size="24" />
                          </div>
                          <div>
-                           <h4 className="font-black text-slate-800 text-base">{s.name}</h4>
-                           <p className="text-xs text-slate-600 leading-tight mt-1">{s.desc}</p>
+                           <h4 className="font-black text-slate-800 text-sm md:text-base">{s.name}</h4>
+                           <p className="text-[10px] md:text-xs text-slate-600 leading-tight mt-1">{s.desc}</p>
                          </div>
                        </div>
                      ))}
@@ -391,32 +397,32 @@ export default function App() {
         )}
 
         {screen === 'home' && (
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-xl border-4 border-slate-300 animate-in slide-in-from-right-8 duration-500 max-w-3xl mx-auto">
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 md:p-8 shadow-xl border-4 border-slate-300 animate-in slide-in-from-right-8 duration-500 max-w-3xl mx-auto">
             <button onClick={() => setScreen('landing')} className="mb-6 flex items-center gap-1 text-slate-400 hover:text-slate-800 font-bold">
               <ArrowLeft size={20} /> トップページへ
             </button>
-            <h2 className="text-3xl font-black text-center mb-12 text-slate-800 italic">MISSION SELECT</h2>
-            <div className="grid grid-cols-3 gap-6 relative pb-28">
+            <h2 className="text-2xl md:text-3xl font-black text-center mb-8 md:12 text-slate-800 italic tracking-widest">MISSION SELECT</h2>
+            <div className="grid grid-cols-3 gap-3 md:gap-6 relative pb-28 md:pb-32">
               {[1, 2, 3].map((lvl) => (
                 <button
                   key={lvl}
                   onClick={() => initGame(lvl)}
-                  className="group relative overflow-hidden bg-white hover:bg-slate-50 border-4 border-slate-800 rounded-2xl p-6 transition-all transform hover:-translate-y-1 shadow-[8px_8px_0px_rgba(0,0,0,0.1)] text-center"
+                  className="group relative overflow-hidden bg-white hover:bg-slate-50 border-2 md:border-4 border-slate-800 rounded-xl md:rounded-2xl p-4 md:p-6 transition-all transform hover:-translate-y-1 shadow-[4px_4px_0px_rgba(0,0,0,0.1)] md:shadow-[8px_8px_0px_rgba(0,0,0,0.1)] text-center"
                 >
-                  <div className="text-5xl mb-4">{lvl === 1 ? '🔰' : lvl === 2 ? '🛡️' : '🦅'}</div>
-                  <div className="text-lg font-black text-slate-900">LEVEL {lvl}</div>
+                  <div className="text-3xl md:text-5xl mb-2 md:mb-4">{lvl === 1 ? '🔰' : lvl === 2 ? '🛡️' : '🦅'}</div>
+                  <div className="text-xs md:text-lg font-black text-slate-900 leading-none">LEVEL {lvl}</div>
                 </button>
               ))}
               
               <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-full flex justify-center">
                 <button
                   onClick={() => initGame('hell')}
-                  className="group flex items-center gap-4 bg-red-600 hover:bg-red-700 border-4 border-red-950 rounded-2xl py-4 px-8 transition-all transform hover:scale-105 shadow-[8px_8px_0px_rgba(0,0,0,0.2)] text-white"
+                  className="group flex items-center gap-3 md:gap-4 bg-red-600 hover:bg-red-700 border-2 md:border-4 border-red-950 rounded-xl md:rounded-2xl py-3 md:py-4 px-6 md:px-8 transition-all transform hover:scale-105 shadow-[6px_6px_0px_rgba(0,0,0,0.2)] md:shadow-[8px_8px_0px_rgba(0,0,0,0.2)] text-white"
                 >
-                  <Skull className="w-8 h-8 group-hover:animate-spin" />
+                  <Skull className="w-6 h-6 md:w-8 md:h-8 group-hover:animate-spin" />
                   <div className="text-left">
-                    <div className="text-xl font-black italic">HELL MODE</div>
-                    <div className="text-[10px] font-bold opacity-80">15秒制限・ミス厳禁</div>
+                    <div className="text-lg md:text-xl font-black italic leading-none">HELL MODE</div>
+                    <div className="text-[8px] md:text-[10px] font-bold opacity-80 mt-1">15秒制限・ミス厳禁</div>
                   </div>
                 </button>
               </div>
@@ -425,39 +431,39 @@ export default function App() {
         )}
 
         {screen === 'game' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center bg-white/95 p-4 rounded-2xl shadow-md border-2 border-slate-200">
-              <button onClick={() => { clearInterval(timerRef.current); setScreen('home'); }} className="flex items-center gap-1 text-slate-500 hover:text-slate-900 font-bold">
-                <ArrowLeft size={20} /> 撤退
+          <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="flex justify-between items-center bg-white/95 p-3 md:p-4 rounded-2xl shadow-md border-2 border-slate-200">
+              <button onClick={() => { if (timerRef.current) clearInterval(timerRef.current); setScreen('home'); }} className="flex items-center gap-1 text-slate-500 hover:text-slate-900 font-bold text-sm">
+                <ArrowLeft size={18} /> 撤退
               </button>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 {level === 'hell' && (
-                  <div className={`flex items-center gap-2 font-black text-xl px-4 py-1 rounded-xl border-2 transition-all ${timeLeft <= 5 ? 'bg-red-100 text-red-600 border-red-600 animate-pulse' : 'bg-slate-100 text-slate-800 border-slate-300'}`}>
-                    <Timer size={20} /> {timeLeft}s
+                  <div className={`flex items-center gap-2 font-black text-lg md:text-xl px-3 md:px-4 py-1 rounded-xl border-2 transition-all ${timeLeft <= 5 ? 'bg-red-100 text-red-600 border-red-600 animate-pulse' : 'bg-slate-100 text-slate-800 border-slate-300'}`}>
+                    <Timer size={18} /> {timeLeft}s
                   </div>
                 )}
-                <div className="text-emerald-600 font-black">POINT: {score}</div>
+                <div className="text-emerald-600 font-black text-sm md:text-base tracking-widest">SCORE: {score}</div>
               </div>
             </div>
 
-            <div className={`bg-slate-800 p-6 md:p-8 rounded-3xl text-white text-center shadow-2xl border-b-8 border-slate-950 transition-all min-h-[140px] flex flex-col items-center justify-center relative overflow-hidden ${isExploding ? 'bg-red-600' : ''}`}>
-              <h2 className="text-2xl md:text-4xl font-black mb-2 relative z-10">{message}</h2>
+            <div className={`bg-slate-800 p-4 md:p-8 rounded-3xl text-white text-center shadow-2xl border-b-8 border-slate-950 transition-all min-h-[120px] md:min-h-[140px] flex flex-col items-center justify-center relative overflow-hidden ${isExploding ? 'bg-red-600 border-red-950' : ''}`}>
+              <h2 className="text-xl md:text-4xl font-black mb-1 md:mb-2 relative z-10 leading-tight">{message}</h2>
               <div className={`transition-all duration-300 transform ${showHint ? 'opacity-100 scale-100 mt-2' : 'opacity-0 scale-50 h-0 pointer-events-none'}`}>
-                 <div className="bg-white text-slate-900 w-14 h-14 rounded-xl flex items-center justify-center shadow-lg mx-auto border-4 border-yellow-400">
-                    {targetSymbol && <MapIcon type={targetSymbol.id} size="28" />}
+                 <div className="bg-white text-slate-900 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center shadow-lg mx-auto border-4 border-yellow-400">
+                    {targetSymbol && <MapIcon type={targetSymbol.id} size="24" />}
                  </div>
               </div>
             </div>
 
-            <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 pb-10 ${isExploding ? 'grayscale blur-sm' : ''}`}>
+            <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 md:gap-2 pb-10 ${isExploding ? 'grayscale blur-sm' : ''}`}>
               {blocks.map((block) => (
                 <button
                   key={block.id_instance}
                   onClick={() => handleBlockClick(block)}
                   disabled={!block.visible || isExploding}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${block.visible ? 'bg-white shadow-sm hover:bg-slate-50 active:scale-90 border-b-2 border-slate-200' : 'opacity-0 scale-0 pointer-events-none'}`}
+                  className={`aspect-square rounded-lg md:rounded-xl flex items-center justify-center transition-all ${block.visible ? 'bg-white shadow-sm hover:bg-slate-50 active:scale-90 border-b-2 border-slate-200' : 'opacity-0 scale-0 pointer-events-none'}`}
                 >
-                  <div className="text-slate-700 scale-90"><MapIcon type={block.id} size="24" /></div>
+                  <div className="text-slate-700 scale-75 md:scale-90"><MapIcon type={block.id} size="24" /></div>
                 </button>
               ))}
             </div>
@@ -465,13 +471,13 @@ export default function App() {
         )}
 
         {screen === 'gameover' && (
-          <div className="bg-red-950 rounded-3xl p-10 shadow-2xl border-t-8 border-red-500 text-center animate-in zoom-in duration-300">
-            <div className="text-8xl mb-6">💥</div>
-            <h2 className="text-5xl font-black text-white mb-4 italic">MISSION FAILED</h2>
-            <p className="text-xl text-red-200 font-bold mb-8">鬼教官：「逃げるのか！？貴様の覚悟はその程度か！」</p>
+          <div className="bg-red-950 rounded-3xl p-8 md:p-10 shadow-2xl border-t-8 border-red-500 text-center animate-in zoom-in duration-300 max-w-xl mx-auto">
+            <div className="text-6xl md:text-8xl mb-6">💥</div>
+            <h2 className="text-3xl md:text-5xl font-black text-white mb-4 italic tracking-widest">MISSION FAILED</h2>
+            <p className="text-base md:text-xl text-red-200 font-bold mb-8">鬼教官：「逃げるのか！？貴様の覚悟はその程度か！」</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={() => setScreen('home')} className="bg-white text-slate-900 font-black py-4 px-8 rounded-2xl shadow-lg">本部に帰還</button>
-              <button onClick={() => initGame('hell')} className="bg-red-600 text-white font-black py-4 px-8 rounded-2xl flex items-center justify-center gap-2 shadow-lg">
+              <button onClick={() => setScreen('home')} className="bg-white text-slate-900 font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl shadow-lg hover:bg-slate-100 transition-colors">本部に帰還</button>
+              <button onClick={() => initGame('hell')} className="bg-red-600 text-white font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:bg-red-700 transition-colors border-b-4 border-red-900 active:border-b-0">
                 <RefreshCcw size={20} /> 再訓練
               </button>
             </div>
@@ -479,13 +485,13 @@ export default function App() {
         )}
 
         {screen === 'result' && (
-          <div className="bg-slate-900 rounded-3xl p-10 shadow-2xl border-t-8 border-yellow-400 text-center animate-in zoom-in duration-500">
-            <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-4xl font-black text-white mb-2">COMPLETE</h2>
-            <p className="text-xl text-slate-400 mb-8 font-bold">君の地理的リテラシーは本物だ。</p>
+          <div className="bg-slate-900 rounded-3xl p-8 md:p-10 shadow-2xl border-t-8 border-yellow-400 text-center animate-in zoom-in duration-500 max-w-xl mx-auto">
+            <Trophy className="w-16 h-16 md:w-20 md:h-20 text-yellow-400 mx-auto mb-4 animate-bounce" />
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-2 italic tracking-tighter">COMPLETE MISSION</h2>
+            <p className="text-base md:text-xl text-slate-400 mb-8 font-bold">君の地理的リテラシーは本物だ。精鋭博士として認めよう。</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={() => setScreen('home')} className="bg-white text-slate-900 font-black py-4 px-8 rounded-2xl shadow-lg">ホーム</button>
-              <button onClick={() => initGame(level)} className="bg-yellow-400 text-slate-900 font-black py-4 px-8 rounded-2xl shadow-lg">もう一度</button>
+              <button onClick={() => setScreen('home')} className="bg-white text-slate-900 font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl shadow-lg hover:bg-slate-100 transition-colors">ホーム</button>
+              <button onClick={() => initGame(level)} className="bg-yellow-400 text-slate-900 font-black py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl shadow-lg hover:bg-yellow-500 transition-colors border-b-4 border-yellow-700 active:border-b-0">もう一度</button>
             </div>
           </div>
         )}
